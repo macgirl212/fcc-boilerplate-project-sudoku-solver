@@ -43,7 +43,9 @@ module.exports = function (app) {
 		if (validate instanceof Object && validate.hasOwnProperty('error')) {
 			return res.json(solver.validate(puzzle));
 		}
-		console.log('solved');
+
+		solver.solve(puzzle);
+
 		return res.json({ msg: 'solved' });
 	});
 };
