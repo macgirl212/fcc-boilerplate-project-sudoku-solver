@@ -26,6 +26,50 @@ class SudokuSolver {
 		}
 	}
 
+	divideGridIntoRegions(row, column) {
+		let xBox;
+		let yBox;
+
+		// find row section
+		switch (row) {
+			case 'A':
+			case 'B':
+			case 'C':
+				xBox = 0;
+				break;
+			case 'D':
+			case 'E':
+			case 'F':
+				xBox = 1;
+				break;
+			case 'G':
+			case 'H':
+			case 'I':
+				xBox = 2;
+				break;
+		}
+
+		// find column section
+		switch (column) {
+			case '0':
+			case '1':
+			case '2':
+				yBox = 0;
+				break;
+			case '3':
+			case '4':
+			case '5':
+				yBox = 1;
+				break;
+			case '6':
+			case '7':
+			case '8':
+				yBox = 2;
+				break;
+		}
+		return [xBox, yBox];
+	}
+
 	validate(puzzleString) {
 		// blank puzzle
 		if (!puzzleString) {
@@ -65,7 +109,24 @@ class SudokuSolver {
 		return true;
 	}
 
-	checkRegionPlacement(puzzleString, row, column, value) {}
+	checkRegionPlacement(puzzleString, row, column, value) {
+		const [xBox, yBox] = this.divideGridIntoRegions(row, column);
+		// loop through only the row of selected section
+		for (let i = xBox; i < xBox + 3; i++) {
+			// loop through only the columns of selected section
+			for (let j = yBox; j < yBox + 3; j++) {
+				// check if value exists in other blocks in region, but do not compare against the block that will be filled
+				if (
+					puzzleString[Object.keys(puzzleString)[i]][j] === value &&
+					Object.keys(puzzleString)[i] !== row &&
+					j.toString() !== column
+				) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	solve(puzzleString) {
 		const sudokuObject = this.makeSudokuObject(puzzleString);
@@ -73,9 +134,26 @@ class SudokuSolver {
 		// get coordinates of empty space
 		const [row, column] = this.findEmptySpace(sudokuObject);
 		/* current value is just for testing */
-		const plausibleRow = this.checkRowPlacement(sudokuObject, row, column, '5');
-		const plausibleCol = this.checkColPlacement(sudokuObject, row, column, '5');
-		console.log(plausibleRow, plausibleCol);
+		const value = '5';
+		const plausibleRow = this.checkRowPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+		const plausibleCol = this.checkColPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+		const plausibleReg = this.checkRegionPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+		console.log(plausibleRow, plausibleCol, plausibleReg);
 	}
 }
 
