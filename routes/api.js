@@ -45,6 +45,6 @@ module.exports = function (app) {
 		}
 
 		const solved = solver.solve(puzzle);
-		res.json({ puzzle: solved });
+		res.json({ solution: solved });
 	});
 };

@@ -21,6 +21,8 @@ class SudokuSolver {
 				if (sudokuObject[row][block] === '.') {
 					const column = block;
 					return [row, column];
+				} else {
+					return false;
 				}
 			}
 		}
@@ -153,30 +155,29 @@ class SudokuSolver {
 
 	solve(puzzleString) {
 		const sudokuObject = this.makeSudokuObject(puzzleString);
-		console.log(sudokuObject);
+
 		// get coordinates of empty space
-		const [row, column] = this.findEmptySpace(sudokuObject);
+		if (this.findEmptySpace(sudokuObject) !== false) {
+			const [row, column] = this.findEmptySpace(sudokuObject);
+			// loop until correct value is found
+			for (let value = 1; value < 10; value++) {
+				const checkedValue = this.checkIfValid(
+					sudokuObject,
+					row,
+					column,
+					value.toString()
+				);
+				if (checkedValue) {
+					// if a correct value is found, update puzzleString
+					const filledIndex =
+						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+					puzzleString =
+						puzzleString.substring(0, filledIndex) +
+						value +
+						puzzleString.substring(filledIndex + 1);
 
-		// loop until correct value is found
-		for (let value = 1; value < 10; value++) {
-			const checkedValue = this.checkIfValid(
-				sudokuObject,
-				row,
-				column,
-				value.toString()
-			);
-			if (checkedValue) {
-				// if a correct value is found, update puzzleString
-				console.log(value);
-				const filledIndex =
-					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
-				puzzleString =
-					puzzleString.substring(0, filledIndex) +
-					value +
-					puzzleString.substring(filledIndex + 1);
-
-				console.log(puzzleString);
-				return puzzleString;
+					return puzzleString;
+				}
 			}
 		}
 	}
