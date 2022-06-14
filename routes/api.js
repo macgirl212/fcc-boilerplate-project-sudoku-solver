@@ -44,8 +44,7 @@ module.exports = function (app) {
 			return res.json(solver.validate(puzzle));
 		}
 
-		solver.solve(puzzle);
-
-		return res.json({ msg: 'solved' });
+		const solved = solver.solve(puzzle);
+		res.json({ puzzle: solved });
 	});
 };

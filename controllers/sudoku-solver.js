@@ -70,6 +70,29 @@ class SudokuSolver {
 		return [xBox, yBox];
 	}
 
+	checkIfValid(sudokuObject, row, column, value) {
+		const plausibleRow = this.checkRowPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+		const plausibleCol = this.checkColPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+		const plausibleReg = this.checkRegionPlacement(
+			sudokuObject,
+			row,
+			column,
+			value
+		);
+
+		return plausibleRow && plausibleCol && plausibleReg ? true : false;
+	}
+
 	validate(puzzleString) {
 		// blank puzzle
 		if (!puzzleString) {
@@ -133,27 +156,29 @@ class SudokuSolver {
 		console.log(sudokuObject);
 		// get coordinates of empty space
 		const [row, column] = this.findEmptySpace(sudokuObject);
-		/* current value is just for testing */
-		const value = '5';
-		const plausibleRow = this.checkRowPlacement(
-			sudokuObject,
-			row,
-			column,
-			value
-		);
-		const plausibleCol = this.checkColPlacement(
-			sudokuObject,
-			row,
-			column,
-			value
-		);
-		const plausibleReg = this.checkRegionPlacement(
-			sudokuObject,
-			row,
-			column,
-			value
-		);
-		console.log(plausibleRow, plausibleCol, plausibleReg);
+
+		// loop until correct value is found
+		for (let value = 1; value < 10; value++) {
+			const checkedValue = this.checkIfValid(
+				sudokuObject,
+				row,
+				column,
+				value.toString()
+			);
+			if (checkedValue) {
+				// if a correct value is found, update puzzleString
+				console.log(value);
+				const filledIndex =
+					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+				puzzleString =
+					puzzleString.substring(0, filledIndex) +
+					value +
+					puzzleString.substring(filledIndex + 1);
+
+				console.log(puzzleString);
+				return puzzleString;
+			}
+		}
 	}
 }
 
