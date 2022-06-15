@@ -95,6 +95,51 @@ class SudokuSolver {
 		return plausibleRow && plausibleCol && plausibleReg ? true : false;
 	}
 
+	solveCell(puzzleString, sudokuObject, row, column) {
+		let selectedRow = row;
+		let selectedColumn = column;
+
+		// if outside of the board, either adjust to next row or end
+		if (column == '9') {
+			selectedColumn = '0';
+			const keys = Object.keys(sudokuObject);
+			const nextIndex = keys.indexOf(row) + 1;
+			selectedRow = keys[nextIndex];
+		}
+
+		if (selectedRow === undefined) {
+			return puzzleString;
+		}
+
+		// if the cell is already filled, move to the next cell
+		if (sudokuObject[selectedRow][selectedColumn] !== '.') {
+			this.solveCell(sudokuObject[selectedRow][Number(selectedColumn) + 1]);
+		}
+
+		console.log(`Checking ${selectedRow}${selectedColumn}...`);
+		// loop until correct value is found
+		for (let value = 1; value < 10; value++) {
+			const checkedValue = this.checkIfValid(
+				sudokuObject,
+				selectedRow,
+				selectedColumn.toString(),
+				value.toString()
+			);
+			if (checkedValue) {
+				// if a correct value is found, update puzzleString
+				const filledIndex =
+					Number(selectedColumn) +
+					Object.keys(sudokuObject).indexOf(selectedRow) * 9;
+				puzzleString =
+					puzzleString.substring(0, filledIndex) +
+					value +
+					puzzleString.substring(filledIndex + 1);
+
+				return puzzleString;
+			}
+		}
+	}
+
 	validate(puzzleString) {
 		// blank puzzle
 		if (!puzzleString) {
@@ -156,30 +201,14 @@ class SudokuSolver {
 	solve(puzzleString) {
 		const sudokuObject = this.makeSudokuObject(puzzleString);
 
-		// get coordinates of empty space
-		if (this.findEmptySpace(sudokuObject) !== false) {
-			const [row, column] = this.findEmptySpace(sudokuObject);
-			// loop until correct value is found
-			for (let value = 1; value < 10; value++) {
-				const checkedValue = this.checkIfValid(
-					sudokuObject,
-					row,
-					column,
-					value.toString()
-				);
-				if (checkedValue) {
-					// if a correct value is found, update puzzleString
-					const filledIndex =
-						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
-					puzzleString =
-						puzzleString.substring(0, filledIndex) +
-						value +
-						puzzleString.substring(filledIndex + 1);
-
-					return puzzleString;
-				}
-			}
+		if (!this.findEmptySpace(sudokuObject)) {
+			return false;
 		}
+
+		// get coordinates of empty space
+		let [row, column] = this.findEmptySpace(sudokuObject);
+		let board = this.solveCell(puzzleString, sudokuObject, row, column);
+		return board;
 	}
 }
 
