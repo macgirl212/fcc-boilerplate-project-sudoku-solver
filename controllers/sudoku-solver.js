@@ -21,11 +21,10 @@ class SudokuSolver {
 				if (sudokuObject[row][block] === '.') {
 					const column = block;
 					return [row, column];
-				} else {
-					return false;
 				}
 			}
 		}
+		return false;
 	}
 
 	divideGridIntoRegions(row, column) {
@@ -95,51 +94,6 @@ class SudokuSolver {
 		return plausibleRow && plausibleCol && plausibleReg ? true : false;
 	}
 
-	solveCell(puzzleString, sudokuObject, row, column) {
-		let selectedRow = row;
-		let selectedColumn = column;
-
-		// if outside of the board, either adjust to next row or end
-		if (column == '9') {
-			selectedColumn = '0';
-			const keys = Object.keys(sudokuObject);
-			const nextIndex = keys.indexOf(row) + 1;
-			selectedRow = keys[nextIndex];
-		}
-
-		if (selectedRow === undefined) {
-			return puzzleString;
-		}
-
-		// if the cell is already filled, move to the next cell
-		if (sudokuObject[selectedRow][selectedColumn] !== '.') {
-			this.solveCell(sudokuObject[selectedRow][Number(selectedColumn) + 1]);
-		}
-
-		console.log(`Checking ${selectedRow}${selectedColumn}...`);
-		// loop until correct value is found
-		for (let value = 1; value < 10; value++) {
-			const checkedValue = this.checkIfValid(
-				sudokuObject,
-				selectedRow,
-				selectedColumn.toString(),
-				value.toString()
-			);
-			if (checkedValue) {
-				// if a correct value is found, update puzzleString
-				const filledIndex =
-					Number(selectedColumn) +
-					Object.keys(sudokuObject).indexOf(selectedRow) * 9;
-				puzzleString =
-					puzzleString.substring(0, filledIndex) +
-					value +
-					puzzleString.substring(filledIndex + 1);
-
-				return puzzleString;
-			}
-		}
-	}
-
 	validate(puzzleString) {
 		// blank puzzle
 		if (!puzzleString) {
@@ -182,9 +136,9 @@ class SudokuSolver {
 	checkRegionPlacement(puzzleString, row, column, value) {
 		const [xBox, yBox] = this.divideGridIntoRegions(row, column);
 		// loop through only the row of selected section
-		for (let i = xBox; i < xBox + 3; i++) {
+		for (let i = xBox * 3; i < xBox * 3 + 3; i++) {
 			// loop through only the columns of selected section
-			for (let j = yBox; j < yBox + 3; j++) {
+			for (let j = yBox * 3; j < yBox * 3 + 3; j++) {
 				// check if value exists in other blocks in region, but do not compare against the block that will be filled
 				if (
 					puzzleString[Object.keys(puzzleString)[i]][j] === value &&
@@ -200,15 +154,56 @@ class SudokuSolver {
 
 	solve(puzzleString) {
 		const sudokuObject = this.makeSudokuObject(puzzleString);
+		let row;
+		let column;
 
-		if (!this.findEmptySpace(sudokuObject)) {
-			return false;
+		// find an empty space
+		const emptySpace = this.findEmptySpace(sudokuObject);
+
+		// if there is an empty space, stop the function
+		if (!emptySpace) {
+			console.log('no empty space', puzzleString);
+			return puzzleString;
+		} else {
+			[row, column] = emptySpace;
+
+			console.log(`Checking ${emptySpace}...`);
+
+			// loop through values for selected empty space
+			for (let value = 1; value < 10; value++) {
+				const checkedValue = this.checkIfValid(
+					sudokuObject,
+					row,
+					column.toString(),
+					value.toString()
+				);
+				if (checkedValue) {
+					// if a correct value is found, update puzzleString
+					const filledIndex =
+						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+					puzzleString =
+						puzzleString.substring(0, filledIndex) +
+						value +
+						puzzleString.substring(filledIndex + 1);
+
+					// if the puzzle is solved, please stop the function...
+					if (this.solve(puzzleString)) {
+						console.log('it is solved', puzzleString);
+						return puzzleString;
+					}
+				} else {
+					// change the selected cell back to a period
+					const filledIndex =
+						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+					puzzleString =
+						puzzleString.substring(0, filledIndex) +
+						'.' +
+						puzzleString.substring(filledIndex + 1);
+				}
+			}
 		}
-
-		// get coordinates of empty space
-		let [row, column] = this.findEmptySpace(sudokuObject);
-		let board = this.solveCell(puzzleString, sudokuObject, row, column);
-		return board;
+		console.log('dead end', puzzleString);
+		return false;
 	}
 }
 
