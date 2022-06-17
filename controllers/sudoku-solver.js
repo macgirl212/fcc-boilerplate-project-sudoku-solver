@@ -164,42 +164,44 @@ class SudokuSolver {
 		if (!emptySpace) {
 			console.log('no empty space', puzzleString);
 			return puzzleString;
-		} else {
-			[row, column] = emptySpace;
+		}
+		[row, column] = emptySpace;
 
-			console.log(`Checking ${emptySpace}...`);
+		console.log(`Checking ${emptySpace}...`);
 
-			// loop through values for selected empty space
-			for (let value = 1; value < 10; value++) {
-				const checkedValue = this.checkIfValid(
-					sudokuObject,
-					row,
-					column.toString(),
-					value.toString()
-				);
-				if (checkedValue) {
-					// if a correct value is found, update puzzleString
-					const filledIndex =
-						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
-					puzzleString =
-						puzzleString.substring(0, filledIndex) +
-						value +
-						puzzleString.substring(filledIndex + 1);
+		// loop through values for selected empty space
+		for (let value = 1; value < 10; value++) {
+			const checkedValue = this.checkIfValid(
+				sudokuObject,
+				row,
+				column.toString(),
+				value.toString()
+			);
+			if (checkedValue) {
+				// if a correct value is found, update puzzleString
+				let filledIndex =
+					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+				puzzleString =
+					puzzleString.substring(0, filledIndex) +
+					value +
+					puzzleString.substring(filledIndex + 1);
 
-					// if the puzzle is solved, please stop the function...
-					if (this.solve(puzzleString)) {
+				// if the puzzle is solved, please stop the function...
+				if (this.solve(puzzleString)) {
+					if (!puzzleString.includes('.')) {
 						console.log('it is solved', puzzleString);
 						return puzzleString;
 					}
-				} else {
-					// change the selected cell back to a period
-					const filledIndex =
-						Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
-					puzzleString =
-						puzzleString.substring(0, filledIndex) +
-						'.' +
-						puzzleString.substring(filledIndex + 1);
+					return puzzleString;
 				}
+			} else {
+				// change the selected cell back to a period
+				const filledIndex =
+					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+				puzzleString =
+					puzzleString.substring(0, filledIndex) +
+					'.' +
+					puzzleString.substring(filledIndex + 1);
 			}
 		}
 		console.log('dead end', puzzleString);

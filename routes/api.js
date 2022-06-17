@@ -29,8 +29,6 @@ module.exports = function (app) {
 			return res.json({ error: 'Invalid value' });
 		}
 
-		const [row, column] = coordinate.split('');
-
 		return res.json({ msg: 'checked' });
 	});
 
@@ -45,6 +43,7 @@ module.exports = function (app) {
 		}
 
 		const solved = solver.solve(puzzle);
+		console.log('returned result: ', solved);
 		res.json({ solution: solved });
 	});
 };
