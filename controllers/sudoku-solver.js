@@ -1,44 +1,4 @@
 class SudokuSolver {
-	makeSudokuArray(puzzleString) {
-		// separate puzzleString into a nested array for each row
-		let sudokuArray = [];
-		const rows = puzzleString.match(/.{9}/g);
-		rows.forEach((row) => {
-			sudokuArray.push(row.split(''));
-		});
-		return sudokuArray;
-	}
-
-	divideintoRegions(unit) {
-		// divide into groups of 3
-		switch (unit) {
-			case 0:
-			case 1:
-			case 2:
-				return 0;
-			case 3:
-			case 4:
-			case 5:
-				return 1;
-			case 6:
-			case 7:
-			case 8:
-				return 2;
-		}
-	}
-
-	checkIfValid(sudokuArray, row, column, value) {
-		const plausibleRow = this.checkRowPlacement(sudokuArray, row, value);
-		const plausibleCol = this.checkColPlacement(sudokuArray, column, value);
-		const plausibleReg = this.checkRegionPlacement(
-			sudokuArray,
-			row,
-			column,
-			value
-		);
-		return plausibleRow && plausibleCol && plausibleReg ? true : false;
-	}
-
 	validate(puzzleString) {
 		// blank puzzle
 		if (!puzzleString) {
@@ -56,38 +16,66 @@ class SudokuSolver {
 		}
 	}
 
-	checkRowPlacement(sudokuArray, row, value) {
+	solveCell(grid, row, column) {
+		// if the end of the grid is reached, return grid
+		if (row === 9 - 1 && column === 9) {
+			return grid;
+		}
+
+		// if the end of the row is reached, move to the next row
+		if (column === 9) {
+			row++;
+			column = 0;
+		}
+
+		// if number is already filled, skip to the next
+		if (grid[row][column] !== 0) {
+			return this.solveCell(grid, row, column + 1);
+		}
+
+		// loop through values for selected empty space
+		for (let value = 1; value < 10; value++) {
+			// if a correct value is found, update grid
+			if (this.isSafe(grid, row, column, value)) {
+				grid[row][column] = value;
+
+				if (this.solveCell(grid, row, column + 1)) {
+					return grid;
+				}
+			}
+			// change the selected cell back to a period
+			grid[row][column] = 0;
+		}
+		return false;
+	}
+
+	isSafe(grid, row, column, value) {
 		// loop through each cell in chosen row
-		for (const cell in sudokuArray[row]) {
+		for (let x = 0; x <= 8; x++) {
 			// check if value exists in each cell
-			if (sudokuArray[row][cell] == value) {
+			if (grid[row][x] == value) {
 				return false;
 			}
 		}
-		return true;
-	}
 
-	checkColPlacement(sudokuArray, column, value) {
-		// loop through each cell in chosen column
-		for (const cell in sudokuArray) {
+		// loop through each cell in chosen row
+		for (let x = 0; x <= 8; x++) {
 			// check if value exists in each cell
-			if (sudokuArray[cell][column] == value) {
+			if (grid[x][column] == value) {
 				return false;
 			}
 		}
-		return true;
-	}
 
-	checkRegionPlacement(sudokuArray, row, column, value) {
-		const xBox = this.divideintoRegions(row);
-		const yBox = this.divideintoRegions(column);
+		// divide into groups of 3
+		let startRow = row - (row % 3);
+		let startCol = column - (column % 3);
 
 		// loop through only the row of selected section
-		for (let i = xBox * 3; i < xBox * 3 + 3; i++) {
+		for (let i = 0; i < 3; i++) {
 			// loop through only the columns of selected section
-			for (let j = yBox * 3; j < yBox * 3 + 3; j++) {
+			for (let j = 0; j < 3; j++) {
 				// check if value exists in other cells in region
-				if (sudokuArray[i][j] == value) {
+				if (grid[i + startRow][j + startCol] == value) {
 					return false;
 				}
 			}
@@ -95,67 +83,53 @@ class SudokuSolver {
 		return true;
 	}
 
-	solveCell(puzzleString, sudokuArray, row, column) {
-		// if no row or column is entered, start at 0 index for both
-		if (!row) {
-			row = 0;
-		}
-		if (!column) {
-			column = 0;
-		}
+	transform(puzzleString) {
+		// setup grid
+		let grid = [
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		];
+		let row = -1;
+		let column = 0;
 
-		// if the end of the column is reached, move to the next nested array and reset at index 0
-		if (column === 9) {
-			column = 0;
-			row++;
-		}
-
-		// if the end of the nested array is reached, return puzzleString
-		if (row === 9) {
-			return puzzleString;
-		}
-
-		if (sudokuArray[row][column] !== '.') {
-			return this.solveCell(puzzleString, sudokuArray, row, column + 1);
-		}
-
-		console.log(`Checking row ${row}, column ${column}...`);
-
-		// loop through values for selected empty space
-		for (let value = 1; value < 10; value++) {
-			const checkedValue = this.checkIfValid(sudokuArray, row, column, value);
-			if (checkedValue) {
-				// if a correct value is found, update puzzleString
-				let filledIndex = column + row * 9;
-				puzzleString =
-					puzzleString.substring(0, filledIndex) +
-					value +
-					puzzleString.substring(filledIndex + 1);
-				console.log('new filled space', puzzleString);
-
-				if (
-					this.solveCell(puzzleString, sudokuArray, row, column + 1) != false &&
-					!puzzleString.includes('.')
-				) {
-					console.log('it is solved', puzzleString);
-					return puzzleString;
-				}
-			} else {
-				// change the selected cell back to a period
-				let filledIndex = column + row * 9;
-				puzzleString =
-					puzzleString.substring(0, filledIndex) +
-					'.' +
-					puzzleString.substring(filledIndex + 1);
+		// separate puzzleString into a nested array grid
+		for (let i = 0; i < puzzleString.length; i++) {
+			if (i % 9 == 0) {
+				row++;
 			}
+			if (column % 9 == 0) {
+				column = 0;
+			}
+
+			grid[row][column] = puzzleString[i] === '.' ? 0 : puzzleString[i];
+			column++;
 		}
-		console.log('dead end', puzzleString);
-		return false;
+		return grid;
+	}
+
+	transformBack(grid) {
+		// turn grid back into a string
+		return grid.flat().join('');
 	}
 
 	solve(puzzleString) {
-		let sudokuArray = this.makeSudokuArray(puzzleString);
-		this.solveCell(puzzleString, sudokuArray);
+		let grid = this.transform(puzzleString);
+		let solved = this.solveCell(grid, 0, 0);
+
+		// if unsolvable, return false
+		if (!solved) {
+			return false;
+		}
+
+		let solvedString = this.transformBack(solved);
+		return solvedString;
 	}
 }
 
