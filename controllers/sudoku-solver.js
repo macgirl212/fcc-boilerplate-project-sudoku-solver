@@ -1,96 +1,41 @@
 class SudokuSolver {
-	makeSudokuObject(puzzleString) {
-		// separate puzzleString into arrays for values and titles
+	makeSudokuArray(puzzleString) {
+		// separate puzzleString into a nested array for each row
+		let sudokuArray = [];
 		const rows = puzzleString.match(/.{9}/g);
-		const rowTitles = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-
-		// combine the arrays into one object
-		const sudokuObject = {};
-		rows.forEach((row, index) => {
-			sudokuObject[rowTitles[index]] = row;
+		rows.forEach((row) => {
+			sudokuArray.push(row.split(''));
 		});
-		return sudokuObject;
+		return sudokuArray;
 	}
 
-	findEmptySpace(sudokuObject) {
-		// search each row
-		for (const row in sudokuObject) {
-			// search each block of row
-			for (const block in sudokuObject[row]) {
-				// return coordinate of first blank space found
-				if (sudokuObject[row][block] === '.') {
-					const column = block;
-					return [row, column];
-				}
-			}
+	divideintoRegions(unit) {
+		// divide into groups of 3
+		switch (unit) {
+			case 0:
+			case 1:
+			case 2:
+				return 0;
+			case 3:
+			case 4:
+			case 5:
+				return 1;
+			case 6:
+			case 7:
+			case 8:
+				return 2;
 		}
-		return false;
 	}
 
-	divideGridIntoRegions(row, column) {
-		let xBox;
-		let yBox;
-
-		// find row section
-		switch (row) {
-			case 'A':
-			case 'B':
-			case 'C':
-				xBox = 0;
-				break;
-			case 'D':
-			case 'E':
-			case 'F':
-				xBox = 1;
-				break;
-			case 'G':
-			case 'H':
-			case 'I':
-				xBox = 2;
-				break;
-		}
-
-		// find column section
-		switch (column) {
-			case '0':
-			case '1':
-			case '2':
-				yBox = 0;
-				break;
-			case '3':
-			case '4':
-			case '5':
-				yBox = 1;
-				break;
-			case '6':
-			case '7':
-			case '8':
-				yBox = 2;
-				break;
-		}
-		return [xBox, yBox];
-	}
-
-	checkIfValid(sudokuObject, row, column, value) {
-		const plausibleRow = this.checkRowPlacement(
-			sudokuObject,
-			row,
-			column,
-			value
-		);
-		const plausibleCol = this.checkColPlacement(
-			sudokuObject,
-			row,
-			column,
-			value
-		);
+	checkIfValid(sudokuArray, row, column, value) {
+		const plausibleRow = this.checkRowPlacement(sudokuArray, row, value);
+		const plausibleCol = this.checkColPlacement(sudokuArray, column, value);
 		const plausibleReg = this.checkRegionPlacement(
-			sudokuObject,
+			sudokuArray,
 			row,
 			column,
 			value
 		);
-
 		return plausibleRow && plausibleCol && plausibleReg ? true : false;
 	}
 
@@ -111,40 +56,38 @@ class SudokuSolver {
 		}
 	}
 
-	checkRowPlacement(puzzleString, row, column, value) {
-		// loop through each block in chosen row
-		for (const block in puzzleString[row]) {
-			// check if value exists in each block, but do not compare against the block that will be filled
-			if (puzzleString[row][block] === value && column !== row) {
+	checkRowPlacement(sudokuArray, row, value) {
+		// loop through each cell in chosen row
+		for (const cell in sudokuArray[row]) {
+			// check if value exists in each cell
+			if (sudokuArray[row][cell] == value) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	checkColPlacement(puzzleString, row, column, value) {
-		// loop through each block in chosen column
-		for (const block in puzzleString) {
-			// check if value exists in each block, but do not compare against the block that will be filled
-			if (puzzleString[block][column] === value && row !== column) {
+	checkColPlacement(sudokuArray, column, value) {
+		// loop through each cell in chosen column
+		for (const cell in sudokuArray) {
+			// check if value exists in each cell
+			if (sudokuArray[cell][column] == value) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	checkRegionPlacement(puzzleString, row, column, value) {
-		const [xBox, yBox] = this.divideGridIntoRegions(row, column);
+	checkRegionPlacement(sudokuArray, row, column, value) {
+		const xBox = this.divideintoRegions(row);
+		const yBox = this.divideintoRegions(column);
+
 		// loop through only the row of selected section
 		for (let i = xBox * 3; i < xBox * 3 + 3; i++) {
 			// loop through only the columns of selected section
 			for (let j = yBox * 3; j < yBox * 3 + 3; j++) {
-				// check if value exists in other blocks in region, but do not compare against the block that will be filled
-				if (
-					puzzleString[Object.keys(puzzleString)[i]][j] === value &&
-					Object.keys(puzzleString)[i] !== row &&
-					j.toString() !== column
-				) {
+				// check if value exists in other cells in region
+				if (sudokuArray[i][j] == value) {
 					return false;
 				}
 			}
@@ -152,52 +95,54 @@ class SudokuSolver {
 		return true;
 	}
 
-	solve(puzzleString) {
-		const sudokuObject = this.makeSudokuObject(puzzleString);
-		let row;
-		let column;
+	solveCell(puzzleString, sudokuArray, row, column) {
+		// if no row or column is entered, start at 0 index for both
+		if (!row) {
+			row = 0;
+		}
+		if (!column) {
+			column = 0;
+		}
 
-		// find an empty space
-		const emptySpace = this.findEmptySpace(sudokuObject);
+		// if the end of the column is reached, move to the next nested array and reset at index 0
+		if (column === 9) {
+			column = 0;
+			row++;
+		}
 
-		// if there is an empty space, stop the function
-		if (!emptySpace) {
-			console.log('no empty space', puzzleString);
+		// if the end of the nested array is reached, return puzzleString
+		if (row === 9) {
 			return puzzleString;
 		}
-		[row, column] = emptySpace;
 
-		console.log(`Checking ${emptySpace}...`);
+		if (sudokuArray[row][column] !== '.') {
+			return this.solveCell(puzzleString, sudokuArray, row, column + 1);
+		}
+
+		console.log(`Checking row ${row}, column ${column}...`);
 
 		// loop through values for selected empty space
 		for (let value = 1; value < 10; value++) {
-			const checkedValue = this.checkIfValid(
-				sudokuObject,
-				row,
-				column.toString(),
-				value.toString()
-			);
+			const checkedValue = this.checkIfValid(sudokuArray, row, column, value);
 			if (checkedValue) {
 				// if a correct value is found, update puzzleString
-				let filledIndex =
-					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+				let filledIndex = column + row * 9;
 				puzzleString =
 					puzzleString.substring(0, filledIndex) +
 					value +
 					puzzleString.substring(filledIndex + 1);
+				console.log('new filled space', puzzleString);
 
-				// if the puzzle is solved, please stop the function...
-				if (this.solve(puzzleString)) {
-					if (!puzzleString.includes('.')) {
-						console.log('it is solved', puzzleString);
-						return puzzleString;
-					}
+				if (
+					this.solveCell(puzzleString, sudokuArray, row, column + 1) != false &&
+					!puzzleString.includes('.')
+				) {
+					console.log('it is solved', puzzleString);
 					return puzzleString;
 				}
 			} else {
 				// change the selected cell back to a period
-				const filledIndex =
-					Number(column) + Object.keys(sudokuObject).indexOf(row) * 9;
+				let filledIndex = column + row * 9;
 				puzzleString =
 					puzzleString.substring(0, filledIndex) +
 					'.' +
@@ -206,6 +151,11 @@ class SudokuSolver {
 		}
 		console.log('dead end', puzzleString);
 		return false;
+	}
+
+	solve(puzzleString) {
+		let sudokuArray = this.makeSudokuArray(puzzleString);
+		this.solveCell(puzzleString, sudokuArray);
 	}
 }
 

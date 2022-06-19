@@ -43,7 +43,6 @@ module.exports = function (app) {
 		}
 
 		const solved = solver.solve(puzzle);
-		console.log('returned result: ', solved);
 		res.json({ solution: solved });
 	});
 };
