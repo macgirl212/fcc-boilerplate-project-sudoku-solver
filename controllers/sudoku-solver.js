@@ -49,6 +49,55 @@ class SudokuSolver {
 		return false;
 	}
 
+	isSafeManual(puzzleString, selectedRow, selectedColumn, value) {
+		let grid = this.transform(puzzleString);
+
+		const rowArray = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+		selectedRow = selectedRow.toUpperCase();
+		const row = rowArray.indexOf(selectedRow);
+		const column = Number(selectedColumn) - 1;
+
+		if (grid[row][column] !== 0) {
+			if (grid[row][column] === value) {
+				return true;
+			}
+			return false;
+		}
+
+		let errorArray = [];
+		// loop through each cell in chosen row
+		for (let x = 0; x <= 8; x++) {
+			// check if value exists in each cell
+			if (grid[row][x] == value) {
+				errorArray.push('row');
+			}
+		}
+
+		// loop through each cell in chosen row
+		for (let x = 0; x <= 8; x++) {
+			// check if value exists in each cell
+			if (grid[x][column] == value) {
+				errorArray.push('column');
+			}
+		}
+
+		// divide into groups of 3
+		let startRow = row - (row % 3);
+		let startCol = column - (column % 3);
+
+		// loop through only the row of selected section
+		for (let i = 0; i < 3; i++) {
+			// loop through only the columns of selected section
+			for (let j = 0; j < 3; j++) {
+				// check if value exists in other cells in region
+				if (grid[i + startRow][j + startCol] == value) {
+					errorArray.push('region');
+				}
+			}
+		}
+		return errorArray;
+	}
+
 	isSafe(grid, row, column, value) {
 		// loop through each cell in chosen row
 		for (let x = 0; x <= 8; x++) {

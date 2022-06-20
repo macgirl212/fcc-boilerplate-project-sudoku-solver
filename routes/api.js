@@ -29,7 +29,20 @@ module.exports = function (app) {
 			return res.json({ error: 'Invalid value' });
 		}
 
-		return res.json({ msg: 'checked' });
+		const [row, column] = coordinate.split('');
+
+		const checked = solver.isSafeManual(puzzle, row, column, value);
+
+		// if checked includes error message array, return errors
+		if (checked instanceof Array && checked.length !== 0) {
+			return res.json({ valid: false, conflict: checked });
+		}
+
+		// if checked checks a previously filled cell, return validity
+		if (typeof checked === 'boolean') {
+			return res.json({ valid: checked });
+		}
+		res.json({ valid: true });
 	});
 
 	app.route('/api/solve').post((req, res) => {
@@ -43,6 +56,10 @@ module.exports = function (app) {
 		}
 
 		const solved = solver.solve(puzzle);
+
+		if (!solved) {
+			return res.json({ error: 'Puzzle cannot be solved' });
+		}
 		res.json({ solution: solved });
 	});
 };
